@@ -38,7 +38,11 @@ def _get_calendar_service():
             "title": {"type": "string", "description": "Appointment title / subject"},
             "date": {"type": "string", "description": "Date in YYYY-MM-DD format"},
             "time": {"type": "string", "description": "Time in HH:MM 24h format"},
-            "duration_minutes": {"type": "integer", "description": "Duration in minutes", "default": 30},
+            "duration_minutes": {
+                "type": "integer",
+                "description": "Duration in minutes",
+                "default": 30,
+            },
             "attendee_email": {"type": "string", "description": "Caller's email address"},
             "notes": {"type": "string", "description": "Optional notes or agenda"},
         },
@@ -60,9 +64,11 @@ async def schedule_appointment(args: dict, session: CallSession) -> dict[str, An
         if args.get("attendee_email"):
             event_body["attendees"] = [{"email": args["attendee_email"]}]
 
-        event = service.events().insert(
-            calendarId=settings.google_calendar_id, body=event_body, sendUpdates="all"
-        ).execute()
+        event = (
+            service.events()
+            .insert(calendarId=settings.google_calendar_id, body=event_body, sendUpdates="all")
+            .execute()
+        )
 
         return {
             "success": True,
@@ -93,13 +99,17 @@ async def check_availability(args: dict, session: CallSession) -> dict[str, Any]
         day_start = datetime.fromisoformat(f"{args['date']}T09:00:00")
         day_end = datetime.fromisoformat(f"{args['date']}T17:00:00")
 
-        events_result = service.events().list(
-            calendarId=settings.google_calendar_id,
-            timeMin=day_start.isoformat() + "Z",
-            timeMax=day_end.isoformat() + "Z",
-            singleEvents=True,
-            orderBy="startTime",
-        ).execute()
+        events_result = (
+            service.events()
+            .list(
+                calendarId=settings.google_calendar_id,
+                timeMin=day_start.isoformat() + "Z",
+                timeMax=day_end.isoformat() + "Z",
+                singleEvents=True,
+                orderBy="startTime",
+            )
+            .execute()
+        )
 
         busy_slots = [
             {

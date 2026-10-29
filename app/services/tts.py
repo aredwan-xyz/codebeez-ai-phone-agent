@@ -6,7 +6,7 @@ Uses the `eleven_turbo_v2_5` model for lowest latency.
 """
 
 import asyncio
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import structlog
 from elevenlabs import AsyncElevenLabs, VoiceSettings

@@ -7,7 +7,8 @@ Add a new tool by implementing a function and decorating it with @registry.tool(
 from __future__ import annotations
 
 import importlib
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import structlog
 
@@ -23,6 +24,7 @@ class ToolRegistry:
     @classmethod
     def register(cls, name: str, description: str, input_schema: dict):
         """Decorator factory to register a tool handler."""
+
         def decorator(fn: Callable):
             cls._tools[name] = {
                 "name": name,
@@ -31,6 +33,7 @@ class ToolRegistry:
             }
             cls._handlers[name] = fn
             return fn
+
         return decorator
 
     def get_schemas(self) -> list[dict]:

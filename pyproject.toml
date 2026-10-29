@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ai-phone-agent"
 version = "1.0.0"
-description = "Ultimate AI Phone Agent — real-time voice, sub-800ms latency, Claude + Deepgram + ElevenLabs"
+description = "Experimental streaming AI phone agent using Claude, Deepgram and ElevenLabs"
 requires-python = ">=3.11"
 dependencies = [
     # Web framework
@@ -21,10 +21,10 @@ dependencies = [
     "twilio>=9.3.0",
 
     # STT
-    "deepgram-sdk>=3.7.0",
+    "deepgram-sdk>=3.7.0,<4",
 
     # TTS
-    "elevenlabs>=1.9.0",
+    "elevenlabs>=1.9.0,<2",
 
     # Audio processing
     "numpy>=1.26.0",
@@ -38,7 +38,6 @@ dependencies = [
 
     # Cache / session
     "redis[hiredis]>=5.0.0",
-    "aioredis>=2.0.1",
 
     # Settings
     "pydantic>=2.9.0",
@@ -69,6 +68,9 @@ dependencies = [
     "shortuuid>=1.0.13",
     "phonenumbers>=8.13.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
 
 [project.optional-dependencies]
 dev = [

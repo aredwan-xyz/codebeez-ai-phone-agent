@@ -7,7 +7,7 @@ Tool results are injected back into the conversation and streaming resumes.
 
 import asyncio
 import json
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import anthropic
 import structlog
@@ -111,11 +111,13 @@ class LLMService:
                         result = {"error": str(e)}
                         log.error("tool.error", name=tool_name, error=str(e))
 
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": tc["id"],
-                        "content": json.dumps(result),
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": tc["id"],
+                            "content": json.dumps(result),
+                        }
+                    )
 
                 # Inject assistant turn + tool results
                 msgs.append({"role": "assistant", "content": full_response or "(tool call)"})

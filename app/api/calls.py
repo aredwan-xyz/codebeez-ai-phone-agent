@@ -8,11 +8,12 @@ Twilio webhook endpoints.
 /calls/transfer-twiml — TwiML to bridge to a human agent.
 """
 
-from fastapi import APIRouter, Form, Request, Response
-from twilio.twiml.voice_response import Connect, Dial, VoiceResponse, Stream
+from fastapi import APIRouter, Depends, Form, Response
+from twilio.twiml.voice_response import Connect, Dial, Stream, VoiceResponse
 
 from app.config import get_settings
 from app.models.call import OutboundCallRequest
+from app.security import require_admin, require_allowed_outbound, require_twilio
 from app.services.telephony import make_outbound_call
 
 router = APIRouter()
@@ -32,7 +33,7 @@ def _media_stream_twiml(call_sid: str, direction: str = "inbound") -> str:
     return str(resp)
 
 
-@router.post("/inbound")
+@router.post("/inbound", dependencies=[Depends(require_twilio)])
 async def inbound_call(
     CallSid: str = Form(...),
     From: str = Form(...),
@@ -42,7 +43,7 @@ async def inbound_call(
     return Response(content=twiml, media_type="application/xml")
 
 
-@router.post("/outbound")
+@router.post("/outbound", dependencies=[Depends(require_twilio)])
 async def outbound_call_twiml(
     CallSid: str = Form(...),
     From: str = Form(...),
@@ -52,23 +53,25 @@ async def outbound_call_twiml(
     return Response(content=twiml, media_type="application/xml")
 
 
-@router.post("/make")
+@router.post("/make", dependencies=[Depends(require_admin)])
 async def initiate_outbound_call(req: OutboundCallRequest):
     twiml_url = f"{settings.base_url}/calls/outbound"
     call_sid = make_outbound_call(req.to_number, twiml_url)
     return {"call_sid": call_sid, "to": req.to_number}
 
 
-@router.post("/status")
+@router.post("/status", dependencies=[Depends(require_twilio)])
 async def call_status_callback(
     CallSid: str = Form(...),
     CallStatus: str = Form(...),
 ):
     from app.memory.session import SessionStore
+
     store = SessionStore()
     session = await store.get_session(CallSid)
     if session:
         from app.models.call import CallStatus as CS
+
         try:
             session.status = CS(CallStatus.lower().replace("-", "_"))
         except ValueError:
@@ -77,8 +80,11 @@ async def call_status_callback(
     return Response(content="", status_code=204)
 
 
-@router.get("/transfer-twiml")
+@router.api_route(
+    "/transfer-twiml", methods=["GET", "POST"], dependencies=[Depends(require_twilio)]
+)
 async def transfer_twiml(target: str):
+    require_allowed_outbound(target)
     resp = VoiceResponse()
     dial = Dial()
     dial.number(target)

@@ -1,16 +1,15 @@
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel
 
 
-class CallDirection(str, Enum):
+class CallDirection(StrEnum):
     INBOUND = "inbound"
     OUTBOUND = "outbound"
 
 
-class CallStatus(str, Enum):
+class CallStatus(StrEnum):
     RINGING = "ringing"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -26,19 +25,19 @@ class CallSession(BaseModel):
     direction: CallDirection
     status: CallStatus = CallStatus.RINGING
     started_at: datetime = datetime.utcnow()
-    ended_at: Optional[datetime] = None
-    duration_seconds: Optional[int] = None
+    ended_at: datetime | None = None
+    duration_seconds: int | None = None
 
     # Interruption state
     agent_speaking: bool = False
     interrupted: bool = False
 
     # Caller identity (resolved from CRM)
-    caller_name: Optional[str] = None
-    caller_id: Optional[str] = None  # CRM contact ID
+    caller_name: str | None = None
+    caller_id: str | None = None  # CRM contact ID
 
 
 class OutboundCallRequest(BaseModel):
     to_number: str
-    context: Optional[str] = None    # optional instructions for this specific call
-    caller_name: Optional[str] = None
+    context: str | None = None  # optional instructions for this specific call
+    caller_name: str | None = None

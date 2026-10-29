@@ -1,6 +1,7 @@
 """Transfer-to-human and call-end tools."""
 
 from typing import Any
+from urllib.parse import urlencode
 
 import structlog
 
@@ -42,7 +43,7 @@ async def transfer_to_human(args: dict, session: CallSession) -> dict[str, Any]:
         "general": "+15551110000",
     }
     target = transfer_numbers.get(department, transfer_numbers["general"])
-    twiml_url = f"{settings.base_url}/calls/transfer-twiml?target={target}"
+    twiml_url = f"{settings.base_url}/calls/transfer-twiml?{urlencode({'target': target})}"
 
     try:
         warm_transfer(session.call_sid, target, twiml_url)
@@ -68,6 +69,7 @@ async def transfer_to_human(args: dict, session: CallSession) -> dict[str, Any]:
 )
 async def end_call(args: dict, session: CallSession) -> dict[str, Any]:
     from app.services.telephony import hangup_call
+
     try:
         hangup_call(session.call_sid)
         return {"success": True, "summary": args.get("summary", "")}

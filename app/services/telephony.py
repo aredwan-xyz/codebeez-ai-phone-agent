@@ -4,6 +4,7 @@ import structlog
 from twilio.rest import Client
 
 from app.config import get_settings
+from app.security import require_allowed_outbound
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -20,6 +21,7 @@ def get_twilio_client() -> Client:
 
 def make_outbound_call(to_number: str, twiml_url: str) -> str:
     """Initiate an outbound call. Returns the CallSid."""
+    require_allowed_outbound(to_number)
     client = get_twilio_client()
     call = client.calls.create(
         to=to_number,
@@ -39,6 +41,7 @@ def hangup_call(call_sid: str):
 
 def warm_transfer(call_sid: str, target_number: str, twiml_url: str):
     """Bridge the call to a human agent via TwiML redirect."""
+    require_allowed_outbound(target_number)
     client = get_twilio_client()
     client.calls(call_sid).update(url=twiml_url, method="POST")
     log.info("call.transfer", sid=call_sid, target=target_number)

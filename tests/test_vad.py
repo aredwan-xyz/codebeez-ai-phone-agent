@@ -1,8 +1,10 @@
 import asyncio
+
 import numpy as np
 import pytest
-from app.core.vad import BargeInDetector, EndOfTurnDetector
+
 from app.core.audio import pcm16_to_mulaw
+from app.core.vad import BargeInDetector, EndOfTurnDetector
 
 
 def _mulaw_frame(amplitude=0) -> bytes:
@@ -42,6 +44,7 @@ async def test_end_of_turn_silence_timer():
     results = []
     # Very short threshold for testing
     import app.core.vad as vad_module
+
     original = vad_module.settings.vad_silence_threshold_ms
     vad_module.settings.vad_silence_threshold_ms = 100
 

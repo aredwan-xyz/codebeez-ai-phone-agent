@@ -38,6 +38,7 @@ class TurnRecord(Base):
 
 class CallerProfile(Base):
     """Persisted cross-call profile per phone number."""
+
     __tablename__ = "caller_profiles"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

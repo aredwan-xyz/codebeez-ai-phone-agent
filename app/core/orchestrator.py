@@ -11,7 +11,7 @@ Lifecycle:
 
 import asyncio
 import time
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 
 import structlog
 
@@ -220,9 +220,7 @@ class CallOrchestrator:
         profile = await self._history.get_caller_profile(self.session.from_number)
         history_text = ""
         if profile and profile.call_count > 0:
-            history_text = (
-                f"\nThis caller has spoken to you {profile.call_count} time(s) before. "
-            )
+            history_text = f"\nThis caller has spoken to you {profile.call_count} time(s) before. "
             if profile.notes:
                 history_text += f"Notes: {profile.notes}"
 
