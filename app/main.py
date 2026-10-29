@@ -1,16 +1,17 @@
+from contextlib import asynccontextmanager
+
 import structlog
 import uvicorn
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app
 
+from app.api.admin import router as admin_router
+from app.api.calls import router as calls_router
+from app.api.websocket import router as ws_router
 from app.config import get_settings
 from app.db.base import init_db
 from app.memory.session import init_redis
-from app.api.calls import router as calls_router
-from app.api.websocket import router as ws_router
-from app.api.admin import router as admin_router
 
 log = structlog.get_logger()
 settings = get_settings()

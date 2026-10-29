@@ -8,15 +8,15 @@ Fallback: energy-based VAD for barge-in detection while the agent is speaking.
 import asyncio
 import time
 from collections import deque
-from typing import Callable
+from collections.abc import Callable
 
 from app.config import get_settings
 from app.core.audio import compute_energy, mulaw_to_pcm16
 
 settings = get_settings()
 
-ENERGY_SPEECH_THRESHOLD = 0.008   # empirically tuned for telephone audio
-LOOKBACK_FRAMES = 3                # frames to average
+ENERGY_SPEECH_THRESHOLD = 0.008  # empirically tuned for telephone audio
+LOOKBACK_FRAMES = 3  # frames to average
 
 
 class BargeInDetector:

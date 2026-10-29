@@ -1,14 +1,15 @@
 """Admin REST API — call history, KB management, live session inspection."""
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import select
 
 from app.db.base import AsyncSessionLocal
-from app.db.models import CallRecord, CallerProfile, TurnRecord
+from app.db.models import CallerProfile, CallRecord, TurnRecord
 from app.memory.session import get_redis
+from app.security import require_admin
 from app.tools.knowledge_base import ingest_document
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_admin)])
 
 
 @router.get("/calls")
@@ -82,6 +83,7 @@ async def active_sessions():
         raw = await r.get(key)
         if raw:
             import json
+
             sessions.append(json.loads(raw))
     return sessions
 

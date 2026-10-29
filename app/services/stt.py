@@ -6,7 +6,7 @@ Fires transcripts back via a registered callback.
 """
 
 import asyncio
-from typing import Callable
+from collections.abc import Callable
 
 import structlog
 from deepgram import (
@@ -52,7 +52,7 @@ class STTService:
             punctuate=True,
             smart_format=True,
             interim_results=True,
-            endpointing=300,         # ms of silence → speech_final=True
+            endpointing=300,  # ms of silence → speech_final=True
             utterance_end_ms=1000,
         )
 

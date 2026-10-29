@@ -9,7 +9,6 @@ Event flow:
 The handler creates a CallOrchestrator per call and feeds it audio frames.
 """
 
-import asyncio
 import json
 
 import structlog
@@ -20,18 +19,22 @@ from app.core.orchestrator import CallOrchestrator
 from app.memory.history import CallerHistoryService
 from app.memory.session import SessionStore
 from app.models.call import CallDirection, CallSession, CallStatus
-from app.services.stt import STTService
+from app.security import authenticate_twilio_websocket
 
 log = structlog.get_logger()
 router = APIRouter()
 
 
 async def _send_media(ws: WebSocket, stream_sid: str, mulaw_bytes: bytes):
-    await ws.send_text(json.dumps({
-        "event": "media",
-        "streamSid": stream_sid,
-        "media": {"payload": b64_encode_mulaw(mulaw_bytes)},
-    }))
+    await ws.send_text(
+        json.dumps(
+            {
+                "event": "media",
+                "streamSid": stream_sid,
+                "media": {"payload": b64_encode_mulaw(mulaw_bytes)},
+            }
+        )
+    )
 
 
 async def _clear_media(ws: WebSocket, stream_sid: str):
@@ -40,6 +43,8 @@ async def _clear_media(ws: WebSocket, stream_sid: str):
 
 @router.websocket("/call/{call_sid}")
 async def call_websocket(websocket: WebSocket, call_sid: str):
+    if not await authenticate_twilio_websocket(websocket):
+        return
     await websocket.accept()
     log.info("ws.connected", call_sid=call_sid)
 
@@ -47,6 +52,7 @@ async def call_websocket(websocket: WebSocket, call_sid: str):
     history_service = CallerHistoryService()
     orchestrator: CallOrchestrator | None = None
     stream_sid = ""
+    session_created = False
 
     try:
         while True:
@@ -59,8 +65,10 @@ async def call_websocket(websocket: WebSocket, call_sid: str):
 
             elif event == "start":
                 start = msg["start"]
+                if start.get("callSid") != call_sid or session_created:
+                    await websocket.close(code=1008)
+                    break
                 stream_sid = start["streamSid"]
-                call_sid = start["callSid"]
                 params = start.get("customParameters", {})
                 direction = params.get("direction", "inbound")
 
@@ -73,6 +81,7 @@ async def call_websocket(websocket: WebSocket, call_sid: str):
                     status=CallStatus.IN_PROGRESS,
                 )
                 await session_store.save_session(session)
+                session_created = True
 
                 async def send_audio(mulaw_bytes: bytes):
                     await _send_media(websocket, stream_sid, mulaw_bytes)
@@ -89,9 +98,7 @@ async def call_websocket(websocket: WebSocket, call_sid: str):
                 )
 
                 # Start STT first, wire transcript callback
-                await orchestrator._stt.start(
-                    on_transcript=orchestrator.on_deepgram_transcript
-                )
+                await orchestrator._stt.start(on_transcript=orchestrator.on_deepgram_transcript)
                 await orchestrator.start()
                 log.info("ws.call_started", call_sid=call_sid)
 
@@ -115,5 +122,6 @@ async def call_websocket(websocket: WebSocket, call_sid: str):
         if orchestrator:
             await orchestrator._stt.stop()
             await orchestrator.stop()
-        await session_store.delete_session(call_sid)
+        if session_created:
+            await session_store.delete_session(call_sid)
         log.info("ws.cleaned_up", call_sid=call_sid)

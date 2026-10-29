@@ -16,7 +16,10 @@ HUBSPOT_BASE = "https://api.hubapi.com"
 
 
 def _headers() -> dict:
-    return {"Authorization": f"Bearer {settings.hubspot_api_key}", "Content-Type": "application/json"}
+    return {
+        "Authorization": f"Bearer {settings.hubspot_api_key}",
+        "Content-Type": "application/json",
+    }
 
 
 @ToolRegistry.register(
@@ -44,14 +47,26 @@ async def lookup_crm(args: dict, session: CallSession) -> dict[str, Any]:
                 f"{HUBSPOT_BASE}/crm/v3/objects/contacts/search",
                 headers=_headers(),
                 json={
-                    "filterGroups": [{
-                        "filters": [{
-                            "propertyName": "phone",
-                            "operator": "EQ",
-                            "value": phone,
-                        }]
-                    }],
-                    "properties": ["firstname", "lastname", "email", "phone", "company", "jobtitle", "hs_lead_status"],
+                    "filterGroups": [
+                        {
+                            "filters": [
+                                {
+                                    "propertyName": "phone",
+                                    "operator": "EQ",
+                                    "value": phone,
+                                }
+                            ]
+                        }
+                    ],
+                    "properties": [
+                        "firstname",
+                        "lastname",
+                        "email",
+                        "phone",
+                        "company",
+                        "jobtitle",
+                        "hs_lead_status",
+                    ],
                 },
             )
             resp.raise_for_status()
@@ -114,10 +129,17 @@ async def update_crm(args: dict, session: CallSession) -> dict[str, Any]:
                             "hs_note_body": args["notes"],
                             "hs_timestamp": "now",
                         },
-                        "associations": [{
-                            "to": {"id": args["contact_id"]},
-                            "types": [{"associationCategory": "HUBSPOT_DEFINED", "associationTypeId": 202}],
-                        }],
+                        "associations": [
+                            {
+                                "to": {"id": args["contact_id"]},
+                                "types": [
+                                    {
+                                        "associationCategory": "HUBSPOT_DEFINED",
+                                        "associationTypeId": 202,
+                                    }
+                                ],
+                            }
+                        ],
                     },
                 )
 

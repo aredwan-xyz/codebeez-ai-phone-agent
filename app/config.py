@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import Optional
 
 from pydantic_settings import BaseSettings
 
@@ -11,6 +10,9 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     base_url: str = "https://your-ngrok-or-domain.com"
+    admin_api_key: str = ""
+    outbound_enabled: bool = False
+    outbound_allowed_numbers: list[str] = []
 
     # Twilio
     twilio_account_sid: str = ""
@@ -43,18 +45,18 @@ class Settings(BaseSettings):
     agent_timezone: str = "America/New_York"
 
     # Google Calendar
-    google_credentials_path: Optional[str] = None
+    google_credentials_path: str | None = None
     google_calendar_id: str = "primary"
 
     # HubSpot
-    hubspot_api_key: Optional[str] = None
+    hubspot_api_key: str | None = None
 
     # Observability
     log_level: str = "INFO"
-    otel_exporter_otlp_endpoint: Optional[str] = None
+    otel_exporter_otlp_endpoint: str | None = None
 
     # VAD / latency tuning
-    vad_silence_threshold_ms: int = 700    # ms of silence before treating as end-of-turn
+    vad_silence_threshold_ms: int = 700  # ms of silence before treating as end-of-turn
     max_agent_tokens: int = 1024
 
     model_config = {"env_file": ".env", "case_sensitive": False}

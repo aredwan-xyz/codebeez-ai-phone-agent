@@ -5,8 +5,6 @@ Stores text chunks in PostgreSQL + a FAISS index for fast semantic search.
 Embeddings generated with Anthropic's claude-3-haiku or OpenAI text-embedding-3-small.
 """
 
-import json
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -29,6 +27,7 @@ async def _get_embedding(text: str) -> list[float]:
     """Generate an embedding using OpenAI (or swap for another provider)."""
     try:
         import openai
+
         client = openai.AsyncOpenAI()
         resp = await client.embeddings.create(
             model="text-embedding-3-small",
@@ -53,8 +52,10 @@ async def _load_index():
     global _faiss_index, _chunk_ids
     try:
         import faiss
+
         async with AsyncSessionLocal() as db:
             from sqlalchemy import select
+
             result = await db.execute(select(KnowledgeChunk))
             chunks = result.scalars().all()
 
@@ -86,7 +87,11 @@ async def _load_index():
         "type": "object",
         "properties": {
             "query": {"type": "string", "description": "The question or topic to search for"},
-            "top_k": {"type": "integer", "default": 3, "description": "Number of results to return"},
+            "top_k": {
+                "type": "integer",
+                "default": 3,
+                "description": "Number of results to return",
+            },
         },
         "required": ["query"],
     },
@@ -102,13 +107,13 @@ async def search_knowledge_base(args: dict, session: CallSession) -> dict[str, A
         if _faiss_index is None or len(_chunk_ids) == 0:
             return {"results": [], "note": "Knowledge base is empty"}
 
-        import faiss
         embedding = await _get_embedding(query)
         vec = np.array([embedding], dtype=np.float32)
         distances, indices = _faiss_index.search(vec, top_k)
 
         async with AsyncSessionLocal() as db:
             from sqlalchemy import select
+
             matched_ids = [_chunk_ids[i] for i in indices[0] if i < len(_chunk_ids)]
             result = await db.execute(
                 select(KnowledgeChunk).where(KnowledgeChunk.id.in_(matched_ids))
@@ -120,11 +125,13 @@ async def search_knowledge_base(args: dict, session: CallSession) -> dict[str, A
             if idx < len(_chunk_ids):
                 chunk = chunks.get(_chunk_ids[idx])
                 if chunk:
-                    results.append({
-                        "content": chunk.content,
-                        "source": chunk.source,
-                        "relevance_score": float(1 / (1 + distances[0][i])),
-                    })
+                    results.append(
+                        {
+                            "content": chunk.content,
+                            "source": chunk.source,
+                            "relevance_score": float(1 / (1 + distances[0][i])),
+                        }
+                    )
 
         return {"results": results, "total": len(results)}
     except Exception as e:

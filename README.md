@@ -1,6 +1,8 @@
 # CodeBeez AI Phone Agent
 
-> Production-ready AI phone agent: real-time voice, sub-800ms latency, barge-in interruption, multi-tool orchestration, and cross-call memory.
+> Experimental AI phone-agent prototype with streaming voice, interruption handling, tools and cross-call memory. The sub-800ms latency figure is a target, not a published benchmark.
+
+Status: prototype. Live provider calls, latency, deployment access controls and operational limits must be validated for your environment before release.
 
 ## Architecture
 
@@ -60,8 +62,8 @@ Caller → Twilio Media Streams (WebSocket, μ-law 8kHz)
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/yourname/ai-phone-agent.git
-cd ai-phone-agent
+git clone https://github.com/aredwan-xyz/codebeez-ai-phone-agent.git
+cd codebeez-ai-phone-agent
 make setup         # creates venv, installs deps, starts Postgres + Redis
 ```
 
@@ -74,6 +76,7 @@ cp .env.example .env
 #   DEEPGRAM_API_KEY
 #   ELEVENLABS_API_KEY  (+ ELEVENLABS_VOICE_ID for your custom voice)
 #   ANTHROPIC_API_KEY
+#   ADMIN_API_KEY (generate a long random operator token)
 ```
 
 ### 3. Expose publicly (ngrok)
@@ -96,6 +99,23 @@ make dev
 ```
 
 Call your Twilio number. Aria will answer!
+
+### Authentication and outbound policy
+
+Set `BASE_URL` to the exact public HTTPS URL configured in Twilio. Callback and
+Media Stream handshake signatures are validated against this configured URL;
+forwarded host/protocol headers are not trusted. Update `BASE_URL` after an ngrok URL changes.
+
+All `/admin/*` routes and `POST /calls/make` require
+`Authorization: Bearer <ADMIN_API_KEY>`. An empty operator key disables these APIs.
+Keep this token on the server/operator side and never embed it in a public page.
+
+Outbound calls, SMS and transfers are disabled by default. To permit specific
+destinations, explicitly set `OUTBOUND_ENABLED=true` and set
+`OUTBOUND_ALLOWED_NUMBERS` to a JSON array of approved E.164 numbers, for example
+`["+15551110001"]`. Configure provider-side spending limits before enabling them.
+Transfer callbacks support signed GET and POST requests. A signature alone does
+not authorize a destination outside that allowlist.
 
 ### 6. Seed the knowledge base (optional)
 
@@ -157,6 +177,7 @@ GET  /docs                         — Swagger UI (debug mode only)
 
 ```bash
 curl -X POST http://localhost:8000/calls/make \
+  -H "Authorization: Bearer $ADMIN_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"to_number": "+15551234567", "context": "Follow up on last week quote"}'
 ```

@@ -7,10 +7,9 @@ ElevenLabs output:    PCM 16-bit 22050/44100 Hz → resample → μ-law 8 kHz.
 
 import audioop
 import base64
-from typing import Generator
+from collections.abc import Generator
 
 import numpy as np
-
 
 TWILIO_SAMPLE_RATE = 8000
 TWILIO_FRAME_MS = 20

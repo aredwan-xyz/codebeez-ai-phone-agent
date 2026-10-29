@@ -1,11 +1,11 @@
 from datetime import datetime
-from enum import Enum
-from typing import Any, Optional
+from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
@@ -16,13 +16,14 @@ class Message(BaseModel):
     role: Role
     content: str
     timestamp: datetime = datetime.utcnow()
-    tool_call_id: Optional[str] = None
-    tool_name: Optional[str] = None
-    tool_result: Optional[Any] = None
+    tool_call_id: str | None = None
+    tool_name: str | None = None
+    tool_result: Any | None = None
 
 
 class ConversationTurn(BaseModel):
     """A single caller-utterance → agent-response pair."""
+
     call_sid: str
     turn_index: int
     caller_transcript: str

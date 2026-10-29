@@ -3,10 +3,9 @@ Persistent caller history — cross-call memory stored in PostgreSQL.
 """
 
 from datetime import datetime
-from typing import Optional
 
 import structlog
-from sqlalchemy import select, update
+from sqlalchemy import select
 
 from app.db.base import AsyncSessionLocal
 from app.db.models import CallerProfile, CallRecord, TurnRecord
@@ -17,7 +16,7 @@ log = structlog.get_logger()
 
 
 class CallerHistoryService:
-    async def get_caller_profile(self, phone_number: str) -> Optional[CallerProfile]:
+    async def get_caller_profile(self, phone_number: str) -> CallerProfile | None:
         async with AsyncSessionLocal() as db:
             result = await db.execute(
                 select(CallerProfile).where(CallerProfile.phone_number == phone_number)

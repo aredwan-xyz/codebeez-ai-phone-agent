@@ -4,9 +4,6 @@ Redis-backed session store.
 One entry per active call. Expires automatically when the call ends.
 """
 
-import json
-from typing import Optional
-
 import redis.asyncio as redis
 import structlog
 
@@ -50,7 +47,7 @@ class SessionStore:
     async def update_session(self, session: CallSession):
         await self.save_session(session)
 
-    async def get_session(self, call_sid: str) -> Optional[CallSession]:
+    async def get_session(self, call_sid: str) -> CallSession | None:
         raw = await self._r.get(self._key(call_sid))
         if raw:
             return CallSession.model_validate_json(raw)
